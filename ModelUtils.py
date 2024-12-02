@@ -1,8 +1,7 @@
-
 def create_model_class(name):
     module_name = "model_" + name
     module = __import__(module_name)
-    class_name = "Model_" + name
+    class_name = "Model_" + name.capitalize()
     class_ = getattr(module, class_name)
     instance = class_()
     return instance

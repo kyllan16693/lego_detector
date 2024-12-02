@@ -1,7 +1,6 @@
-from keras import applications
-from keras.engine import Model
-from keras.layers import Flatten, Dense, BatchNormalization, Activation, Dropout
-
+from tensorflow.keras import applications
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dropout, Dense, BatchNormalization, Activation
 
 class Model_A(object):
 
@@ -11,18 +10,14 @@ class Model_A(object):
     def create_model(self, image_width, image_height, num_classes):
         model = applications.ResNet50(weights="imagenet", include_top=False, pooling="avg", input_shape=(image_width, image_height, 3))
 
-        # freezing all layers
-        # for layer in model.layers:
-        #     layer.trainable = False
-
+        # Custom layer for classification output
         x = model.output
-        # x = Flatten()(x) # not needed anymore?
-
         x = Dropout(0.8)(x)
 
+        # Classification output
         x = Dense(num_classes)(x)
         x = BatchNormalization()(x)
-        x = Activation('softmax')(x)
+        class_output = Activation('softmax', name='class_out')(x)
 
-        predictions = x
-        return Model(model.input, predictions)
+        # Define the model with specific outputs
+        return Model(inputs=model.input, outputs=class_output)

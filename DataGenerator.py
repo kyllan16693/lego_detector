@@ -211,26 +211,35 @@ class DataGenerator(object):
         return rotated, rotated_mask
 
     def random_hue_shift(self, img):
-        hsv = cv2.split(cv2.cvtColor(img.astype(np.float32) / 255., cv2.COLOR_BGR2HSV))
+        # Convert the image to HSV format and normalize
+        hsv = list(cv2.split(cv2.cvtColor(img.astype(np.float32) / 255., cv2.COLOR_BGR2HSV)))
+        
+        # Modify the hue channel (index 0)
         hsv[0] += np.random.rand() * 360
-        n = (hsv[0] / 360).astype(np.uint32)
-        hsv[0] -= n * 360  # making hue to be within 0..360
-        # randomizing saturation
+        hsv[0] = np.mod(hsv[0], 360)  # Ensure hue values stay within 0-360
+
+        # Randomize saturation and lightness, with clipping to stay in valid ranges
         hsv[1] *= 1 + (np.random.rand() - 0.5) * 2 * self.max_saturation_delta
         hsv[1] = np.clip(hsv[1], 0, 1)
-        # randomizing lightness
         hsv[2] *= 1 + (np.random.rand() - 0.5) * 2 * self.max_lightness_delta
         hsv[2] = np.clip(hsv[2], 0, 1)
+
+        # Merge channels and convert back to BGR format
         img = (cv2.cvtColor(cv2.merge(hsv), cv2.COLOR_HSV2BGR) * 255).astype(np.uint8)
         return img
 
     def random_channel_dropout(self, img):
         if np.random.rand() < 0.5:
-            bgr = cv2.split(img)
+            # Split channels and convert to list for mutability
+            bgr = list(cv2.split(img))
+            
+            # Select a random channel and apply dropout
             channel = np.random.randint(3)
             bgr[channel] = (bgr[channel] * (0.1 + 0.8 * np.random.rand())).astype(np.uint8)
+            
+            # Merge channels back into a single image
             img = cv2.merge(bgr)
-
+        
         return img
 
     def generate_image(self, img, mask, bg, dst_size):
